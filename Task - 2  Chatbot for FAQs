@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chat-header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .chat-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.85em;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            position: relative;
+        }
+
+        .bot .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            margin: 0 10px;
+        }
+
+        .bot .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .user .message-avatar {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .message-time {
+            font-size: 0.7em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 18px;
+            background: white;
+            border-radius: 18px;
+            width: fit-content;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .typing-indicator.show {
+            display: block;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .quick-questions {
+            padding: 15px 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .quick-questions h4 {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .quick-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .quick-btn {
+            background: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1.2em;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .confidence-score {
+            font-size: 0.75em;
+            color: #999;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .no-match {
+            background: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .chatbot-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+
+        .suggested-questions {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .suggested-questions p {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .suggestion-btn {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 5px 12px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chat-header">
+            <h1>🤖 TechStore FAQ Bot</h1>
+            <p>Your virtual assistant for product and service queries</p>
+            <div class="chat-status">
+                <div class="status-dot"></div>
+                <span>Online</span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div>Hello! I'm here to help answer your questions about our products and services. Feel free to ask me anything!</div>
+                    <div class="message-time" id="welcome-time"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-questions">
+            <h4>💡 Quick Questions:</h4>
+            <div class="quick-buttons" id="quick-buttons"></div>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="user-input" 
+                    placeholder="Type your question here..."
+                    autocomplete="off"
+                >
+                <button class="send-btn" id="send-btn">📤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // FAQ Database with comprehensive questions and answers
+        const faqDatabase = [
+            {
+                question: "What are your shipping options?",
+                answer: "We offer multiple shipping options: Standard (5-7 business days, free over $50), Express (2-3 business days, $15), and Overnight ($25). All orders are tracked and insured.",
+                keywords: ["shipping", "delivery", "ship", "send", "mail", "transport", "courier"],
+                category: "Shipping"
+            },
+            {
+                question: "What is your return policy?",
+                answer: "We accept returns within 30 days of purchase. Items must be unused and in original packaging. Refunds are processed within 5-7 business days. Return shipping is free for defective items.",
+                keywords: ["return", "refund", "exchange", "money back", "send back", "cancel order"],
+                category: "Returns"
+            },
+            {
+                question: "How can I track my order?",
+                answer: "Once your order ships, you'll receive a tracking number via email. You can also track your order by logging into your account and visiting the 'My Orders' section.",
+                keywords: ["track", "tracking", "order status", "where is my order", "shipment", "delivery status"],
+                category: "Orders"
+            },
+            {
+                question: "What payment methods do you accept?",
+                answer: "We accept all major credit cards (Visa, MasterCard, American Express, Discover), PayPal, Apple Pay, Google Pay, and bank transfers. All transactions are secure and encrypted.",
+                keywords: ["payment", "pay", "credit card", "paypal", "payment method", "how to pay"],
+                category: "Payment"
+            },
+            {
+                question: "Do you offer warranty on products?",
+                answer: "Yes! All products come with a manufacturer's warranty ranging from 1-3 years depending on the item. Extended warranty options are available at checkout. We also offer hassle-free warranty claims.",
+                keywords: ["warranty", "guarantee", "coverage", "protection", "defect", "broken"],
+                category: "Warranty"
+            },
+            {
+                question: "How do I contact customer support?",
+                answer: "You can reach our customer support team via email at support@techstore.com, phone at 1-800-TECH-HELP (available 24/7), or live chat on our website. Average response time is under 2 hours.",
+                keywords: ["contact", "support", "help", "customer service", "reach", "talk to", "email", "phone"],
+                category: "Support"
+            },
+            {
+                question: "Can I modify or cancel my order?",
+                answer: "Orders can be modified or cancelled within 2 hours of placement. After that, the order enters processing. Please contact customer support immediately if you need to make changes.",
+                keywords: ["cancel", "modify", "change order", "edit order", "stop order", "update order"],
+                category: "Orders"
+            },
+            {
+                question: "Do you ship internationally?",
+                answer: "Yes! We ship to over 100 countries worldwide. International shipping costs vary by location and are calculated at checkout. Delivery typically takes 7-14 business days. Customs fees may apply.",
+                keywords: ["international", "overseas", "abroad", "worldwide", "global", "country"],
+                category: "Shipping"
+            },
+            {
+                question: "How do I create an account?",
+                answer: "Click the 'Sign Up' button at the top right of our homepage. Enter your email, create a password, and fill in your basic information. You'll receive a verification email to activate your account.",
+                keywords: ["account", "register", "sign up", "create account", "join", "membership"],
+                category: "Account"
+            },
+            {
+                question: "Are there any discounts or promotions?",
+                answer: "We regularly offer promotions! Sign up for our newsletter to receive exclusive deals. Current offers: 15% off first purchase, free shipping over $50, and seasonal sales. Check our Deals page for latest offers.",
+                keywords: ["discount", "promo", "coupon", "sale", "offer", "deal", "cheap", "save money"],
+                category: "Promotions"
+            },
+            {
+                question: "What if my product arrives damaged?",
+                answer: "We apologize for any damage! Please contact us within 48 hours with photos of the damage. We'll arrange a free return and send a replacement immediately or issue a full refund. No questions asked.",
+                keywords: ["damaged", "broken", "defective", "not working", "problem", "issue"],
+                category: "Returns"
+            },
+            {
+                question: "How secure is my personal information?",
+                answer: "Your security is our priority. We use 256-bit SSL encryption, comply with PCI DSS standards, and never share your data with third parties. All payment information is tokenized and not stored on our servers.",
+                keywords: ["security", "safe", "private", "privacy", "data", "personal information", "secure"],
+                category: "Security"
+            }
+        ];
+
+        // NLP Processing Functions
+        class NLPProcessor {
+            constructor() {
+                this.stopWords = new Set([
+                    'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+                    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+                    'should', 'may', 'might', 'must', 'can', 'i', 'you', 'he', 'she',
+                    'it', 'we', 'they', 'what', 'which', 'who', 'when', 'where', 'why',
+                    'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'some',
+                    'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than',
+                    'too', 'very', 'just', 'but', 'about', 'please', 'tell', 'me'
+                ]);
+            }
+
+            // Tokenize text into words
+            tokenize(text) {
+                return text.toLowerCase()
+                    .replace(/[^\w\s]/g, ' ')
+                    .split(/\s+/)
+                    .filter(word => word.length > 0);
+            }
+
+            // Remove stop words
+            removeStopWords(tokens) {
+                return tokens.filter(token => !this.stopWords.has(token));
+            }
+
+            // Simple stemming (reducing words to root form)
+            stem(word) {
+                // Basic stemming rules
+                if (word.endsWith('ing')) return word.slice(0, -3);
+                if (word.endsWith('ed')) return word.slice(0, -2);
+                if (word.endsWith('s') && word.length > 3) return word.slice(0, -1);
+                return word;
+            }
+
+            // Process text with full NLP pipeline
+            process(text) {
+                const tokens = this.tokenize(text);
+                const filtered = this.removeStopWords(tokens);
+                const stemmed = filtered.map(token => this.stem(token));
+                return stemmed;
+            }
+
+            // Calculate cosine similarity between two texts
+            cosineSimilarity(text1, text2) {
+                const tokens1 = this.process(text1);
+                const tokens2 = this.process(text2);
+
+                // Create frequency vectors
+                const allTokens = new Set([...tokens1, ...tokens2]);
+                const vector1 = [];
+                const vector2 = [];
+
+                allTokens.forEach(token => {
+                    vector1.push(tokens1.filter(t => t === token).length);
+                    vector2.push(tokens2.filter(t => t === token).length);
+                });
+
+                // Calculate dot product and magnitudes
+                let dotProduct = 0;
+                let magnitude1 = 0;
+                let magnitude2 = 0;
+
+                for (let i = 0; i < vector1.length; i++) {
+                    dotProduct += vector1[i] * vector2[i];
+                    magnitude1 += vector1[i] * vector1[i];
+                    magnitude2 += vector2[i] * vector2[i];
+                }
+
+                magnitude1 = Math.sqrt(magnitude1);
+                magnitude2 = Math.sqrt(magnitude2);
+
+                if (magnitude1 === 0 || magnitude2 === 0) return 0;
+
+                return dotProduct / (magnitude1 * magnitude2);
+            }
+        }
+
+        // Initialize NLP Processor
+        const nlp = new NLPProcessor();
+
+        // DOM Elements
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const quickButtons = document.getElementById('quick-buttons');
+
+        // Initialize
+        function init() {
+            displayWelcomeTime();
+            populateQuickQuestions();
+            userInput.focus();
+        }
+
+        function displayWelcomeTime() {
+            const timeElement = document.getElementById('welcome-time');
+            timeElement.textContent = getCurrentTime();
+        }
+
+        function getCurrentTime() {
+            return new Date().toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        function populateQuickQuestions() {
+            const quickQuestions = [
+                "What are your shipping options?",
+                "How do I track my order?",
+                "What is your return policy?",
+                "What payment methods do you accept?"
+            ];
+
+            quickQuestions.forEach(question => {
+                const btn = document.createElement('button');
+                btn.className = 'quick-btn';
+                btn.textContent = question;
+                btn.onclick = () => handleUserInput(question);
+                quickButtons.appendChild(btn);
+            });
+        }
+
+        function addMessage(text, isUser, confidence = null, suggestions = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = isUser ? '👤' : '🤖';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+
+            const textDiv = document.createElement('div');
+            textDiv.textContent = text;
+            content.appendChild(textDiv);
+
+            if (confidence !== null) {
+                const confidenceDiv = document.createElement('div');
+                confidenceDiv.className = 'confidence-score';
+                confidenceDiv.textContent = `Confidence: ${(confidence * 100).toFixed(1)}%`;
+                content.appendChild(confidenceDiv);
+            }
+
+            if (suggestions.length > 0) {
+                const suggestDiv = document.createElement('div');
+                suggestDiv.className = 'suggested-questions';
+                
+                const suggestText = document.createElement('p');
+                suggestText.textContent = 'Related questions:';
+                suggestDiv.appendChild(suggestText);
+
+                suggestions.forEach(sugg => {
+                    const suggBtn = document.createElement('span');
+                    suggBtn.className = 'suggestion-btn';
+                    suggBtn.textContent = sugg;
+                    suggBtn.onclick = () => handleUserInput(sugg);
+                    suggestDiv.appendChild(suggBtn);
+                });
+
+                content.appendChild(suggestDiv);
+            }
+
+            const time = document.createElement('div');
+            time.className = 'message-time';
+            time.textContent = getCurrentTime();
+            content.appendChild(time);
+
+            if (isUser) {
+                messageDiv.appendChild(content);
+                messageDiv.appendChild(avatar);
+            } else {
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(content);
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'message bot';
+            indicator.id = 'typing-indicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '🤖';
+
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator show';
+            typingDiv.innerHTML = `
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+
+            indicator.appendChild(avatar);
+            indicator.appendChild(typingDiv);
+            chatMessages.appendChild(indicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function findBestMatch(userQuestion) {
+            let bestMatch = null;
+            let highestSimilarity = 0;
+            const matches = [];
+
+            // Process user question
+            const userTokens = nlp.process(userQuestion);
+
+            faqDatabase.forEach(faq => {
+                // Calculate similarity with question
+                let similarity = nlp.cosineSimilarity(userQuestion, faq.question);
+
+                // Boost similarity if keywords match
+                const keywordMatches = faq.keywords.filter(keyword => 
+                    userQuestion.toLowerCase().includes(keyword)
+                ).length;
+
+                similarity += keywordMatches * 0.1;
+
+                // Store all reasonable matches
+                if (similarity > 0.2) {
+                    matches.push({ faq, similarity });
+                }
+
+                if (similarity > highestSimilarity) {
+                    highestSimilarity = similarity;
+                    bestMatch = faq;
+                }
+            });
+
+            // Sort matches and get top suggestions
+            matches.sort((a, b) => b.similarity - a.similarity);
+            const suggestions = matches
+                .slice(1, 4)
+                .map(m => m.faq.question);
+
+            return {
+                match: bestMatch,
+                confidence: highestSimilarity,
+                suggestions: suggestions
+            };
+        }
+
+        function handleUserInput(text = null) {
+            const question = text || userInput.value.trim();
+            
+            if (!question) return;
+
+            // Add user message
+            addMessage(question, true);
+            userInput.value = '';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Simulate processing delay
+            setTimeout(() => {
+                hideTypingIndicator();
+
+                // Find best matching FAQ
+                const result = findBestMatch(question);
+
+                if (result.confidence > 0.3) {
+                    addMessage(result.match.answer, false, result.confidence, result.suggestions);
+                } else {
+                    const noMatchMsg = "I'm not sure I understand your question. Here are some topics I can help with: Shipping, Returns, Orders, Payments, Warranty, and Support. Could you please rephrase your question?";
+                    addMessage(noMatchMsg, false, null, [
+                        "What are your shipping options?",
+                        "How do I track my order?",
+                        "What is your return policy?"
+                    ]);
+                }
+            }, 1000 + Math.random() * 1000);
+        }
+
+        // Event Listeners
+        sendBtn.addEventListener('click', () => handleUserInput());
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleUserInput();
+            }
+        });
+
+        // Initialize chatbot
+        init();
+    </script>
+</body>
+</html>
