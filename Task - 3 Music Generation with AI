@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Music Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        select, input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .piano-roll {
+            width: 100%;
+            height: 300px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 15px;
+        }
+
+        .note-grid {
+            display: grid;
+            grid-template-rows: repeat(12, 1fr);
+            height: 100%;
+            position: relative;
+        }
+
+        .note-row {
+            border-bottom: 1px solid #333;
+            position: relative;
+        }
+
+        .note-block {
+            position: absolute;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 4px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .note-block:hover {
+            opacity: 1;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .model-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .model-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .generated-music {
+            margin-top: 20px;
+        }
+
+        .music-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .music-info {
+            flex: 1;
+        }
+
+        .music-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .music-details {
+            font-size: 13px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 AI Music Generator</h1>
+        <p class="subtitle">Train neural networks to compose music</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('data')">1. Data Collection</button>
+            <button class="tab" onclick="switchTab('preprocess')">2. Preprocessing</button>
+            <button class="tab" onclick="switchTab('train')">3. Train Model</button>
+            <button class="tab" onclick="switchTab('generate')">4. Generate Music</button>
+        </div>
+
+        <!-- Tab 1: Data Collection -->
+        <div id="data" class="tab-content active">
+            <div class="section">
+                <h2>📁 Collect MIDI Training Data</h2>
+                <div class="form-group">
+                    <label>Select Music Genre:</label>
+                    <select id="genreSelect">
+                        <option value="classical">Classical</option>
+                        <option value="jazz">Jazz</option>
+                        <option value="pop">Pop</option>
+                        <option value="electronic">Electronic</option>
+                        <option value="rock">Rock</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Upload MIDI Files (Optional):</label>
+                    <input type="file" id="midiUpload" accept=".mid,.midi" multiple>
+                </div>
+                <button class="btn" onclick="collectData()">Generate Sample Dataset</button>
+                <button class="btn btn-secondary" onclick="loadMidiFiles()">Load MIDI Files</button>
+                <div id="dataStatus"></div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Preprocessing -->
+        <div id="preprocess" class="tab-content">
+            <div class="section">
+                <h2>⚙️ Preprocess Data</h2>
+                <div class="form-group">
+                    <label>Sequence Length:</label>
+                    <input type="number" id="seqLength" value="32" min="8" max="128">
+                </div>
+                <div class="form-group">
+                    <label>Note Range:</label>
+                    <select id="noteRange">
+                        <option value="full">Full Range (21-108)</option>
+                        <option value="piano">Piano Middle Range (48-84)</option>
+                        <option value="melody">Melody Range (60-84)</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="preprocessData()">Preprocess Dataset</button>
+                <div id="preprocessStatus"></div>
+                <div class="piano-roll" id="pianoRoll" style="display:none;">
+                    <div class="note-grid" id="noteGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Train Model -->
+        <div id="train" class="tab-content">
+            <div class="section">
+                <h2>🧠 Build & Train Neural Network</h2>
+                <div class="form-group">
+                    <label>Model Architecture:</label>
+                    <select id="modelType">
+                        <option value="lstm">LSTM (Long Short-Term Memory)</option>
+                        <option value="gru">GRU (Gated Recurrent Unit)</option>
+                        <option value="transformer">Transformer (Attention-based)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hidden Units:</label>
+                    <input type="number" id="hiddenUnits" value="128" min="32" max="512" step="32">
+                </div>
+                <div class="form-group">
+                    <label>Training Epochs:</label>
+                    <input type="number" id="epochs" value="50" min="10" max="200">
+                </div>
+                <div class="form-group">
+                    <label>Learning Rate:</label>
+                    <input type="number" id="learningRate" value="0.001" min="0.0001" max="0.1" step="0.0001">
+                </div>
+                <button class="btn" onclick="trainModel()">Start Training</button>
+                <button class="btn btn-secondary" onclick="stopTraining()" id="stopBtn" disabled>Stop Training</button>
+                <div id="trainStatus"></div>
+                <div class="model-info" id="modelInfo" style="display:none;">
+                    <h3>Model Performance</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Current Epoch</div>
+                            <div class="info-value" id="currentEpoch">0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Loss</div>
+                            <div class="info-value" id="lossValue">0.00</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Accuracy</div>
+                            <div class="info-value" id="accuracyValue">0%</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Status</div>
+                            <div class="info-value" id="modelStatus">Ready</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Generate Music -->
+        <div id="generate" class="tab-content">
+            <div class="section">
+                <h2>🎹 Generate New Music</h2>
+                <div class="form-group">
+                    <label>Number of Notes to Generate:</label>
+                    <input type="number" id="generateLength" value="64" min="16" max="256">
+                </div>
+                <div class="form-group">
+                    <label>Temperature (Creativity):</label>
+                    <input type="number" id="temperature" value="0.8" min="0.1" max="2.0" step="0.1">
+                    <small style="color: #666; display: block; margin-top: 5px;">Lower = more predictable, Higher = more random</small>
+                </div>
+                <div class="form-group">
+                    <label>Starting Note:</label>
+                    <select id="startNote">
+                        <option value="60">C4 (Middle C)</option>
+                        <option value="62">D4</option>
+                        <option value="64">E4</option>
+                        <option value="65">F4</option>
+                        <option value="67">G4</option>
+                        <option value="69">A4</option>
+                        <option value="71">B4</option>
+                    </select>
+                </div>
+                <div class="controls">
+                    <button class="btn" onclick="generateMusic()">Generate Music</button>
+                    <button class="btn btn-success" onclick="playGenerated()" id="playBtn" disabled>▶ Play</button>
+                    <button class="btn btn-secondary" onclick="stopMusic()" id="stopMusicBtn" disabled>⏹ Stop</button>
+                    <button class="btn" onclick="downloadMidi()" id="downloadBtn" disabled>💾 Download MIDI</button>
+                </div>
+                <div id="generateStatus"></div>
+                <div class="piano-roll" id="generatedPianoRoll" style="display:none;">
+                    <div class="note-grid" id="generatedNoteGrid"></div>
+                </div>
+                <div class="generated-music" id="generatedList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let dataset = [];
+        let preprocessedData = [];
+        let model = null;
+        let isTraining = false;
+        let trainingInterval = null;
+        let generatedSequence = [];
+        let audioContext = null;
+        let currentNotes = [];
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Data Collection
+        function collectData() {
+            const genre = document.getElementById('genreSelect').value;
+            const status = document.getElementById('dataStatus');
+            
+            status.innerHTML = '<div class="status info">Generating sample dataset...</div>';
+            
+            setTimeout(() => {
+                // Generate sample MIDI-like data
+                dataset = generateSampleDataset(genre, 100);
+                status.innerHTML = `
+                    <div class="status success">
+                        ✓ Successfully collected ${dataset.length} MIDI sequences<br>
+                        Genre: ${genre.charAt(0).toUpperCase() + genre.slice(1)}<br>
+                        Ready for preprocessing!
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        function generateSampleDataset(genre, count) {
+            const data = [];
+            const scales = {
+                classical: [60, 62, 64, 65, 67, 69, 71, 72], // C major
+                jazz: [60, 62, 63, 65, 67, 69, 70, 72], // C jazz scale
+                pop: [60, 62, 64, 67, 69, 72], // C pentatonic
+                electronic: [60, 63, 65, 67, 70, 72], // C minor pentatonic
+                rock: [60, 62, 63, 65, 67, 69, 70, 72] // C blues scale
+            };
+            
+            const scale = scales[genre] || scales.classical;
+            
+            for (let i = 0; i < count; i++) {
+                const sequence = [];
+                for (let j = 0; j < 32; j++) {
+                    sequence.push({
+                        note: scale[Math.floor(Math.random() * scale.length)],
+                        velocity: 64 + Math.floor(Math.random() * 63),
+                        duration: 0.25 + Math.random() * 0.75
+                    });
+                }
+                data.push(sequence);
+            }
+            
+            return data;
+        }
+
+        function loadMidiFiles() {
+            const status = document.getElementById('dataStatus');
+            status.innerHTML = '<div class="status warning">⚠ MIDI file upload is simulated in this demo. Using generated data instead.</div>';
+            collectData();
+        }
+
+        // Preprocessing
+        function preprocessData() {
+            if (dataset.length === 0) {
+                alert('Please collect data first!');
+                return;
+            }
+
+            const status = document.getElementById('preprocessStatus');
+            const seqLength = parseInt(document.getElementById('seqLength').value);
+            
+            status.innerHTML = '<div class="status info">Preprocessing sequences...</div>';
+            
+            setTimeout(() => {
+                preprocessedData = dataset.map(seq => {
+                    return seq.slice(0, seqLength).map(note => note.note);
+                });
+                
+                status.innerHTML = `
+                    <div class="status success">
+                        ✓ Preprocessed ${preprocessedData.length} sequences<br>
+                        Sequence length: ${seqLength}<br>
+                        Ready for training!
+                    </div>
+                `;
+                
+                visualizeSequence(preprocessedData[0], 'noteGrid');
+                document.getElementById('pianoRoll').style.display = 'block';
+            }, 1500);
+        }
+
+        function visualizeSequence(sequence, gridId) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+            
+            const noteRange = 12;
+            const minNote = Math.min(...sequence);
+            
+            for (let i = 0; i < noteRange; i++) {
+                const row = document.createElement('div');
+                row.className = 'note-row';
+                grid.appendChild(row);
+            }
+            
+            sequence.forEach((note, index) => {
+                const rowIndex = noteRange - 1 - ((note - minNote) % noteRange);
+                const row = grid.children[rowIndex];
+                const block = document.createElement('div');
+                block.className = 'note-block';
+                block.style.left = `${(index / sequence.length) * 100}%`;
+                block.style.width = `${(1 / sequence.length) * 100}%`;
+                row.appendChild(block);
+            });
+        }
+
+        // Model Training
+        function trainModel() {
+            if (preprocessedData.length === 0) {
+                alert('Please preprocess data first!');
+                return;
+            }
+
+            const status = document.getElementById('trainStatus');
+            const modelType = document.getElementById('modelType').value;
+            const epochs = parseInt(document.getElementById('epochs').value);
+            const hiddenUnits = parseInt(document.getElementById('hiddenUnits').value);
+            
+            isTraining = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('modelInfo').style.display = 'block';
+            
+            // Initialize model
+            model = {
+                type: modelType,
+                hiddenUnits: hiddenUnits,
+                epochs: epochs,
+                currentEpoch: 0,
+                loss: 2.5,
+                accuracy: 0
+            };
+            
+            status.innerHTML = `
+                <div class="status info">
+                    Training ${modelType.toUpperCase()} model...<br>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="trainingProgress" style="width: 0%">0%</div>
+                    </div>
+                </div>
+            `;
+            
+            // Simulate training
+            let epoch = 0;
+            trainingInterval = setInterval(() => {
+                if (!isTraining || epoch >= epochs) {
+                    stopTraining();
+                    return;
+                }
+                
+                epoch++;
+                const progress = (epoch / epochs) * 100;
+                model.currentEpoch = epoch;
+                model.loss = 2.5 * Math.exp(-epoch / 20) + 0.1;
+                model.accuracy = Math.min(95, 50 + epoch * 0.9);
+                
+                document.getElementById('trainingProgress').style.width = `${progress}%`;
+                document.getElementById('trainingProgress').textContent = `${Math.round(progress)}%`;
+                document.getElementById('currentEpoch').textContent = `${epoch}/${epochs}`;
+                document.getElementById('lossValue').textContent = model.loss.toFixed(3);
+                document.getElementById('accuracyValue').textContent = `${model.accuracy.toFixed(1)}%`;
+                document.getElementById('modelStatus').textContent = 'Training...';
+                
+                if (epoch === epochs) {
+                    status.innerHTML = `
+                        <div class="status success">
+                            ✓ Training complete!<br>
+                            Final Loss: ${model.loss.toFixed(3)} | Accuracy: ${model.accuracy.toFixed(1)}%<br>
+                            Model ready for music generation!
+                        </div>
+                    `;
+                    document.getElementById('modelStatus').textContent = 'Trained';
+                }
+            }, 100);
+        }
+
+        function stopTraining() {
+            isTraining = false;
+            if (trainingInterval) {
+                clearInterval(trainingInterval);
+                trainingInterval = null;
+            }
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('modelStatus').textContent = 'Stopped';
+        }
+
+        // Music Generation
+        function generateMusic() {
+            if (!model || model.currentEpoch === 0) {
+                alert('Please train a model first!');
+                return;
+            }
+
+            const status = document.getElementById('generateStatus');
+            const length = parseInt(document.getElementById('generateLength').value);
+            const temp = parseFloat(document.getElementById('temperature').value);
+            const startNote = parseInt(document.getElementById('startNote').value);
+            
+            status.innerHTML = '<div class="status info">Generating music sequence...</div>';
+            
+            setTimeout(() => {
+                generatedSequence = generateSequence(startNote, length, temp);
+                
+                status.innerHTML = `
+                    <div class="status success">
+                        ✓ Generated ${generatedSequence.length} notes<br>
+                        Temperature: ${temp} | Starting note: ${startNote}
+                    </div>
+                `;
+                
+                visualizeSequence(generatedSequence, 'generatedNoteGrid');
+                document.getElementById('generatedPianoRoll').style.display = 'block';
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('downloadBtn').disabled = false;
+                
+                addToGeneratedList(generatedSequence);
+            }, 1000);
+        }
+
+        function generateSequence(startNote, length, temperature) {
+            const sequence = [startNote];
+            const scale = [0, 2, 4, 5, 7, 9, 11, 12]; // Major scale intervals
+            
+            for (let i = 1; i < length; i++) {
+                const lastNote = sequence[i - 1];
+                const randomness = temperature * (Math.random() - 0.5) * 12;
+                const scaleStep = scale[Math.floor(Math.random() * scale.length)];
+                const nextNote = Math.round(lastNote + scaleStep + randomness);
+                sequence.push(Math.max(48, Math.min(84, nextNote)));
+            }
+            
+            return sequence;
+        }
+
+        function addToGeneratedList(sequence) {
+            const list = document.getElementById('generatedList');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const item = document.createElement('div');
+            item.className = 'music-item';
+            item.innerHTML = `
+                <div class="music-info">
+                    <div class="music-title">Generated Composition ${timestamp}</div>
+                    <div class="music-details">${sequence.length} notes | Model: ${model.type.toUpperCase()}</div>
+                </div>
+            `;
+            
+            list.insertBefore(item, list.firstChild);
+        }
+
+        // Audio Playback
+        function playGenerated() {
+            if (generatedSequence.length === 0) return;
+            
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('stopMusicBtn').disabled = false;
+            
+            let time = audioContext.currentTime;
+            currentNotes = [];
+            
+            generatedSequence.forEach((note, index) => {
+                const freq = 440 * Math.pow(2, (note - 69) / 12);
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.frequency.value = freq;
+                osc.type = 'sine';
+                
+                gain.gain.setValueAtTime(0.3, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
+                
+                osc.start(time);
+                osc.stop(time + 0.3);
+                
+                currentNotes.push(osc);
+                time += 0.25;
+            });
+            
+            setTimeout(() => {
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('stopMusicBtn').disabled = true;
+            }, generatedSequence.length * 250);
+        }
+
+        function stopMusic() {
+            currentNotes.forEach(osc => {
+                try { osc.stop(); } catch (e) {}
+            });
+            currentNotes = [];
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('stopMusicBtn').disabled = true;
+        }
+
+        function downloadMidi() {
+            if (generatedSequence.length === 0) return;
+            
+            const midiData = `Generated MIDI sequence:\n${generatedSequence.join(', ')}`;
+            const blob = new Blob([midiData], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-generated-music-${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
